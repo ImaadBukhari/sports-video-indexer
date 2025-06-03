@@ -1,7 +1,6 @@
 from fastapi import FastAPI, File, UploadFile, Form
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
-from moviepy.video.io.VideoFileClip import VideoFileClip
+from fastapi.responses import JSONResponse
 import os
 
 app = FastAPI()
@@ -17,16 +16,21 @@ app.add_middleware(
 
 @app.post("/process")
 async def process(query: str = Form(...), file: UploadFile = File(None), use_demo: bool = Form(False)):
-    input_path = "demo.mp4" if use_demo else f"uploads/{file.filename}"
+    # For now, we're ignoring the actual file and just returning mock data
+    # Later you can integrate real processing here
+    
+    # Mock data to return
+    result = {
+        "thumbnails": ["thumbnail1.jpg", "thumbnail2.jpg", "thumbnail3.jpg"],
+        "previews": ["preview1.mov", "preview2.mov", "preview3.mov"],
+        "videos": ["video1.mov", "video2.mov", "video3.mov"]
+    }
+    
+    # If a file was uploaded, store it for later use
     if not use_demo and file:
         os.makedirs("uploads", exist_ok=True)
+        input_path = f"uploads/{file.filename}"
         with open(input_path, "wb") as f:
             f.write(await file.read())
-
-    # Replace with your ML inference
-    start, end = 10, 20  # mock result
-    clip = VideoFileClip(input_path).subclip(start, end)
-    output_path = "result.mp4"
-    clip.write_videofile(output_path, codec="libx264", audio_codec="aac")
-
-    return FileResponse(output_path, media_type="video/mp4")
+    
+    return JSONResponse(content=result)
