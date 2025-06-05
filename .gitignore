@@ -42,3 +42,4 @@ best.pt
 *.mp4
 *.avi
 
+venv/

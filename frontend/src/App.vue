@@ -48,6 +48,11 @@
     
     <!-- Results page -->
     <div v-else-if="currentView === 'results'" class="content-wrapper results-view">
+      <div class="search-info" v-if="searchQuery">
+        <h2 class="search-query">Results for: "{{ searchQuery }}"</h2>
+        <p class="results-count">{{ results.thumbnails.length }} matches found</p>
+      </div>
+      
       <div class="thumbnails-grid">
         <div 
           v-for="(thumbnail, index) in results.thumbnails" 
@@ -60,25 +65,46 @@
           <!-- Show preview on hover, otherwise show thumbnail -->
           <video 
             v-if="hoveredIndex === index" 
-            :src="getAssetUrl(results.previews[index])" 
+            :src="getAssetUrl(results.previews[index], 'previews')" 
             autoplay 
             loop 
             muted 
             class="preview-video"
           ></video>
-          <img v-else :src="getAssetUrl(thumbnail)" :alt="`Result ${index + 1}`" class="thumbnail-img" />
+          <img 
+            v-else 
+            :src="getAssetUrl(thumbnail, 'thumbnails')" 
+            :alt="`Result ${index + 1}`" 
+            class="thumbnail-img" 
+          />
+          
+          <!-- Video info overlay -->
+          <div class="video-info" v-if="results.search_results && results.search_results[index]">
+            <span class="video-name">{{ results.search_results[index].video_name }}</span>
+            <span class="similarity-score">{{ Math.round(results.search_results[index].similarity * 100) }}% match</span>
+          </div>
         </div>
       </div>
     </div>
     
     <!-- Video player page -->
     <div v-else-if="currentView === 'player'" class="content-wrapper player-view">
-      <video 
-        :src="getAssetUrl(selectedVideo)" 
-        controls 
-        autoplay
-        class="video-player" 
-      ></video>
+      <div class="video-container">
+        <video 
+          :src="getAssetUrl(selectedVideo, 'videos')" 
+          controls 
+          autoplay
+          class="video-player"
+          @error="handleVideoError" 
+        ></video>
+        
+        <!-- Video metadata -->
+        <div class="video-metadata" v-if="selectedVideoInfo">
+          <h3>{{ selectedVideoInfo.video_name }}</h3>
+          <p>Frame: {{ selectedVideoInfo.frame_number }} | Match: {{ Math.round(selectedVideoInfo.similarity * 100) }}%</p>
+        </div>
+      </div>
+      
       <button @click="backToResults" class="back-button">
         Back to Results
       </button>
@@ -90,52 +116,33 @@
 import { ref, onMounted } from 'vue';
 import axios from 'axios';
 
-// Import assets
-const thumbnailAssets = {
-  'thumbnail1.jpg': new URL('@/assets/thumbnail1.jpg', import.meta.url).href,
-  'thumbnail2.jpg': new URL('@/assets/thumbnail2.jpg', import.meta.url).href,
-  'thumbnail3.jpg': new URL('@/assets/thumbnail3.jpg', import.meta.url).href
-};
+// Base URL for backend
+const BACKEND_URL = 'http://127.0.0.1:8000';
 
-const previewAssets = {
-  'preview1.mov': new URL('@/assets/preview1.mov', import.meta.url).href,
-  'preview2.mov': new URL('@/assets/preview2.mov', import.meta.url).href,
-  'preview3.mov': new URL('@/assets/preview3.mov', import.meta.url).href
-};
-
-const videoAssets = {
-  'video1.mov': new URL('@/assets/video1.mov', import.meta.url).href,
-  'video2.mov': new URL('@/assets/video2.mov', import.meta.url).href,
-  'video3.mov': new URL('@/assets/video3.mov', import.meta.url).href
-};
-
-// Helper function to get asset URLs
-const getAssetUrl = (filename) => {
+// Helper function to get asset URLs from backend
+const getAssetUrl = (filename, assetType) => {
   if (!filename) return '';
   
-  if (filename.includes('thumbnail')) {
-    return thumbnailAssets[filename] || '';
-  } else if (filename.includes('preview')) {
-    return previewAssets[filename] || '';
-  } else if (filename.includes('video')) {
-    return videoAssets[filename] || '';
-  }
-  return '';
+  // Return URL pointing to backend static files
+  return `${BACKEND_URL}/static/${assetType}/${filename}`;
 };
 
 // State variables
 const query = ref('');
+const searchQuery = ref(''); // Store the search query for display
 const file = ref(null);
 const loading = ref(false);
-const useDemo = ref(false);
+const useDemo = ref(true); // Default to demo for testing
 const currentView = ref('search');
 const results = ref({
   thumbnails: [],
   previews: [],
-  videos: []
+  videos: [],
+  search_results: []
 });
 const hoveredIndex = ref(null);
 const selectedVideo = ref(null);
+const selectedVideoInfo = ref(null);
 
 // Handle file selection
 const handleFileChange = (e) => {
@@ -155,6 +162,7 @@ const stopPreview = () => {
 // Play full video
 const playFullVideo = (index) => {
   selectedVideo.value = results.value.videos[index];
+  selectedVideoInfo.value = results.value.search_results ? results.value.search_results[index] : null;
   currentView.value = 'player';
 };
 
@@ -167,19 +175,35 @@ const backToResults = () => {
 const resetToHome = () => {
   currentView.value = 'search';
   query.value = '';
+  searchQuery.value = '';
   file.value = null;
   results.value = {
     thumbnails: [],
     previews: [],
-    videos: []
+    videos: [],
+    search_results: []
   };
   hoveredIndex.value = null;
   selectedVideo.value = null;
+  selectedVideoInfo.value = null;
+};
+
+// Handle video loading errors
+const handleVideoError = (event) => {
+  console.error('Video loading error:', event);
+  alert('Error loading video. Please try again.');
 };
 
 // Handle search submission
 const handleSubmit = async () => {
+  if (!query.value.trim()) {
+    alert('Please enter a search query');
+    return;
+  }
+
   loading.value = true;
+  searchQuery.value = query.value; // Store search query for display
+  
   const formData = new FormData();
   formData.append('query', query.value);
   formData.append('use_demo', useDemo.value);
@@ -193,20 +217,47 @@ const handleSubmit = async () => {
     await new Promise(resolve => setTimeout(resolve, 3000));
     
     // Send request to backend
-    const response = await axios.post('http://127.0.0.1:8000/process', formData);
+    const response = await axios.post(`${BACKEND_URL}/process`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
     
     // Store results
     results.value = response.data;
     
+    console.log('Search results:', response.data);
+    
     // Change view to results
     currentView.value = 'results';
+    
   } catch (error) {
     console.error('Error processing request:', error);
-    alert('An error occurred while processing your request.');
+    
+    let errorMessage = 'An error occurred while processing your request.';
+    if (error.response) {
+      errorMessage += ` Server responded with: ${error.response.status} ${error.response.statusText}`;
+    } else if (error.request) {
+      errorMessage += ' Please check if the backend server is running.';
+    }
+    
+    alert(errorMessage);
   } finally {
     loading.value = false;
   }
 };
+
+// Test backend connection on component mount
+onMounted(async () => {
+  try {
+    await axios.get(`${BACKEND_URL}/videos`);
+    console.log('✅ Backend connection successful');
+  } catch (error) {
+    console.warn('❌ Backend connection failed:', error.message);
+  }
+});
+
+
 </script>
 
 <style scoped>
@@ -274,6 +325,24 @@ const handleSubmit = async () => {
   height: 100%;
   justify-content: center;
   padding-top: 80px;
+}
+
+/* Search info styling */
+.search-info {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.search-query {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 0.5rem;
+}
+
+.results-count {
+  color: #666;
+  font-size: 1rem;
 }
 
 /* Main title styling */
@@ -408,15 +477,70 @@ const handleSubmit = async () => {
   object-fit: cover;
 }
 
+/* Video info overlay */
+.video-info {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.8));
+  color: white;
+  padding: 15px 10px 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  font-size: 0.8rem;
+}
+
+.video-name {
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.similarity-score {
+  background-color: #FD9935;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+/* Video container styling */
+.video-container {
+  width: 100%;
+  max-width: 1000px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
 /* Video player styling */
 .video-player {
   width: 100%;
-  max-width: 1000px;
   border-radius: 12px;
   overflow: hidden;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
   margin-bottom: 20px;
   aspect-ratio: 16 / 9;
+}
+
+/* Video metadata styling */
+.video-metadata {
+  text-align: center;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.video-metadata h3 {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-bottom: 5px;
+  text-transform: capitalize;
+}
+
+.video-metadata p {
+  color: #666;
+  font-size: 0.9rem;
 }
 
 /* Back button styling */
@@ -459,3 +583,5 @@ html, body {
   overflow: hidden;
 }
 </style>
+
+

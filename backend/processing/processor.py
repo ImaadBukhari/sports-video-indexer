@@ -99,15 +99,17 @@ def create_embeddings(synced_captions, model_name_512, model_name_1024):
             avg_embedding_1024 = np.mean(embeddings_1024_list, axis=0)
             
             # Normalize the averaged embeddings
-            avg_embedding_512 = normalize([avg_embedding_512])[0]
-            avg_embedding_1024 = normalize([avg_embedding_1024])[0]
+            avg_embedding_512 = normalize([avg_embedding_512])[0].astype(np.float32)
+            avg_embedding_1024 = normalize([avg_embedding_1024])[0].astype(np.float32)
+
             
             embeddings_512[frame_num] = avg_embedding_512
             embeddings_1024[frame_num] = avg_embedding_1024
         else:
             # Single caption - encode directly
-            embedding_512 = model_512.encode([caption_list[0]])[0]
-            embedding_1024 = model_1024.encode([caption_list[0]])[0]
+            embedding_512 = model_512.encode([caption_list[0]])[0].astype(np.float32)
+            embedding_1024 = model_1024.encode([caption_list[0]])[0].astype(np.float32)
+
             
             embeddings_512[frame_num] = embedding_512
             embeddings_1024[frame_num] = embedding_1024
