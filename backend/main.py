@@ -21,9 +21,9 @@ async def process(query: str = Form(...), file: UploadFile = File(None), use_dem
     
     # Mock data to return
     result = {
-        "thumbnails": ["thumbnail1.jpg", "thumbnail2.jpg"],
-        "previews": ["preview1.mov", "preview2.mov"],
-        "videos": ["video1.mov", "video2.mov"]
+        "thumbnails": ["thumbnail1.jpg", "thumbnail2.jpg", "thumbnail3.jpg"],
+        "previews": ["preview1.mov", "preview2.mov", "preview3.mov"],
+        "videos": ["video1.mov", "video2.mov", "video3.mov"]
     }
     
     # If a file was uploaded, store it for later use

@@ -34,3 +34,11 @@ backend/venv/
 
 # Python cache
 *.pyc
+
+# Model weights
+best.pt
+
+# Video files
+*.mp4
+*.avi
+
