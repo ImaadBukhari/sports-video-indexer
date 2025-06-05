@@ -11,9 +11,9 @@ from event_detector import EventDetector
 from event_detector.event_visualizer import EventVisualizer
 
 
-def main():
+def main(file_path='input_videos/08fd33_4.mp4'):
     # Read Video
-    video_frames = read_video('input_videos/08fd33_4.mp4')
+    video_frames = read_video(file_path)
 
     # Initialize Tracker
     tracker = Tracker('models/best.pt')
@@ -127,4 +127,4 @@ def main():
     return indexed_data
 
 if __name__ == '__main__':
-    main()
+    main(file_path='input_videos/08fd33_4.mp4')
