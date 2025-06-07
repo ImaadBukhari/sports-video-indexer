@@ -7,6 +7,7 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Node
 node_modules
 dist
 dist-ssr
@@ -23,23 +24,50 @@ dist-ssr
 *.sln
 *.sw?
 
-node_modules/
+# Python
 __pycache__/
-data/uploads/
-# Python Virtual Environment
+*.py[cod]
+*$py.class
+*.so
+
+# Python Virtual Environments
+venv/
+venv_py313/
+env/
+ENV/
+.env
+.venv
 backend/venv/
+**/venv/
 
-# macOS
-.DS_Store
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
 
-# Python cache
-*.pyc
-
-# Model weights
-best.pt
-
-# Video files
+# Data and media files
+data/uploads/
 *.mp4
 *.avi
+*.mov
+*.MOV
+*.weights
+*.pt
+*.h5
+*.pkl
+*.npy
 
-venv/
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Project specific
+backend/static/thumbnails/
+frontend/src/assets/video*
+frontend/src/assets/preview*
