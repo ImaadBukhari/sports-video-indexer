@@ -1,7 +1,7 @@
 import numpy as np
 from typing import List, Dict, Any, Tuple
 from .events import Event, PassEvent, PressureEvent, PossessionChangeEvent
-from utils import measure_distance
+from ..utils import measure_distance
 
 class EventDetector:
     def __init__(self):

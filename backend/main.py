@@ -9,6 +9,7 @@ from sentence_transformers import SentenceTransformer
 import cv2
 from pathlib import Path
 import glob
+from processing.processor import process_videos
 
 app = FastAPI()
 
@@ -357,6 +358,20 @@ async def test_static():
             file_counts[dir_name] = {"count": 0, "files": []}
     
     return JSONResponse(content=file_counts)
+
+@app.post("/trigger-processing")
+async def trigger_processing():
+    """Trigger the processing of videos in the input directory"""
+    try:
+        process_videos()
+        # Reload embeddings after processing
+        success = load_embeddings()
+        if success:
+            return {"status": "success", "message": "Videos processed and embeddings loaded"}
+        else:
+            return {"status": "error", "message": "Failed to load embeddings after processing"}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
 
 @app.on_event("startup")
 async def startup_event():

@@ -9,6 +9,15 @@
     <div v-if="currentView === 'search'" class="content-wrapper search-view">
       <h1 class="main-title">Search for any moment in the game</h1>
       
+      <!-- Add Process Video button -->
+      <button 
+        @click="processVideo" 
+        :disabled="processing" 
+        class="process-button"
+      >
+        {{ processing ? 'Processing...' : 'Process Video' }}
+      </button>
+      
       <form @submit.prevent="handleSubmit" class="search-form">
         <div class="search-container">
           <div class="logo-container">
@@ -143,6 +152,7 @@ const results = ref({
 const hoveredIndex = ref(null);
 const selectedVideo = ref(null);
 const selectedVideoInfo = ref(null);
+const processing = ref(false);
 
 // Handle file selection
 const handleFileChange = (e) => {
@@ -247,6 +257,24 @@ const handleSubmit = async () => {
   }
 };
 
+// Process video function
+const processVideo = async () => {
+  processing.value = true;
+  try {
+    const response = await axios.post(`${BACKEND_URL}/trigger-processing`);
+    if (response.data.status === 'success') {
+      alert('Video processed successfully!');
+    } else {
+      alert(`Error: ${response.data.message}`);
+    }
+  } catch (error) {
+    console.error('Processing error:', error);
+    alert('Error processing video. Please try again.');
+  } finally {
+    processing.value = false;
+  }
+};
+
 // Test backend connection on component mount
 onMounted(async () => {
   try {
@@ -256,7 +284,6 @@ onMounted(async () => {
     console.warn('❌ Backend connection failed:', error.message);
   }
 });
-
 
 </script>
 
@@ -581,6 +608,27 @@ html, body {
   padding: 0;
   height: 100%;
   overflow: hidden;
+}
+
+.process-button {
+  margin: 20px auto;
+  padding: 12px 24px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: background-color 0.3s;
+}
+
+.process-button:hover {
+  background-color: #45a049;
+}
+
+.process-button:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
 }
 </style>
 

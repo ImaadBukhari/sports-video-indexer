@@ -1,6 +1,6 @@
-import sys 
-sys.path.append('../')
-from utils import get_center_of_bbox, measure_distance
+import numpy as np
+import cv2
+from ..utils import get_center_of_bbox, measure_distance
 
 class PlayerBallAssigner():
     def __init__(self):

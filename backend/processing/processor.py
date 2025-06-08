@@ -6,7 +6,7 @@ from sentence_transformers import SentenceTransformer
 from sklearn.preprocessing import normalize
 
 # Import the main functions from the current directory
-from yolo_main import main as yolo_main
+from .yolo_main import main as yolo_main
 
 def create_embeddings(yolo_data, model_name_512, model_name_1024):
     """
