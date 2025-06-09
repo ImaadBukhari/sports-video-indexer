@@ -71,3 +71,6 @@ Thumbs.db
 backend/static/thumbnails/
 frontend/src/assets/video*
 frontend/src/assets/preview*
+frontend/src/assets/comparison/*.jpg
+frontend/src/assets/comparison/*.png
+frontend/src/assets/comparison/*.gif
