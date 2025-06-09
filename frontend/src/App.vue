@@ -1,12 +1,15 @@
 <template>
   <div class="container">
     <!-- Logo that links to home page on all screens -->
-    <div class="header-logo" @click="resetToHome">
+    <div class="header-logo" @click="resetToHome" v-if="currentView !== 'landing'">
       <img src="@/assets/logo.png" alt="Logo" />
     </div>
     
+    <!-- Landing page -->
+    <LandingPage v-if="currentView === 'landing'" @try-it="goToApp" />
+    
     <!-- Search page -->
-    <div v-if="currentView === 'search'" class="content-wrapper search-view">
+    <div v-else-if="currentView === 'search'" class="content-wrapper search-view">
       <h1 class="main-title">Search for any moment in the game</h1>
       
       <!-- Add Process Video button -->
@@ -124,6 +127,7 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import axios from 'axios';
+import LandingPage from './components/LandingPage.vue';
 
 // Base URL for backend
 const BACKEND_URL = 'http://127.0.0.1:8000';
@@ -142,7 +146,7 @@ const searchQuery = ref(''); // Store the search query for display
 const file = ref(null);
 const loading = ref(false);
 const useDemo = ref(true); // Default to demo for testing
-const currentView = ref('search');
+const currentView = ref('landing'); // Changed default view to landing
 const results = ref({
   thumbnails: [],
   previews: [],
@@ -153,6 +157,28 @@ const hoveredIndex = ref(null);
 const selectedVideo = ref(null);
 const selectedVideoInfo = ref(null);
 const processing = ref(false);
+
+// Navigation functions
+const goToApp = () => {
+  currentView.value = 'search';
+};
+
+// Reset to home page
+const resetToHome = () => {
+  currentView.value = 'landing';
+  query.value = '';
+  searchQuery.value = '';
+  file.value = null;
+  results.value = {
+    thumbnails: [],
+    previews: [],
+    videos: [],
+    search_results: []
+  };
+  hoveredIndex.value = null;
+  selectedVideo.value = null;
+  selectedVideoInfo.value = null;
+};
 
 // Handle file selection
 const handleFileChange = (e) => {
@@ -179,23 +205,6 @@ const playFullVideo = (index) => {
 // Back to results
 const backToResults = () => {
   currentView.value = 'results';
-};
-
-// Reset to home page
-const resetToHome = () => {
-  currentView.value = 'search';
-  query.value = '';
-  searchQuery.value = '';
-  file.value = null;
-  results.value = {
-    thumbnails: [],
-    previews: [],
-    videos: [],
-    search_results: []
-  };
-  hoveredIndex.value = null;
-  selectedVideo.value = null;
-  selectedVideoInfo.value = null;
 };
 
 // Handle video loading errors
